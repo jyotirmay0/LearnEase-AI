@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.NoteAdd
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -54,6 +55,7 @@ fun UploadScreen() {
 
     val pdfUri by vm.selectedPdfUri.collectAsState()
     val pdfText by vm.pdfText.collectAsState()
+    val embed by vm.embedding.collectAsState()
 
     val result = remember { mutableStateOf<Uri?>(null) }
     val pdfPickerLauncher = rememberLauncherForActivityResult(
@@ -63,11 +65,10 @@ fun UploadScreen() {
             val fileName = uri.lastPathSegment ?: "document.pdf"
             result.value = it
             vm.onPdfSelected(it)
-            vm.pdfExtract(uri, context)
-            vm.chunking(pdfText)
-
+            vm.pdfExtract(uri)
         }
     }
+
 
     Scaffold(
 
@@ -136,6 +137,28 @@ fun UploadScreen() {
                     modifier = Modifier.padding(16.dp)
                 )
             }
+            item {
+
+                Button(
+                    onClick = {
+                        vm.embedding()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text("Generate Embeddings")
+                }
+            }
+            item {
+                EmbeddingsBox(embed)
+            }
 
 }}}
 
@@ -200,3 +223,94 @@ fun ExtractedTextBox(
     }
 }
 
+@Composable
+fun EmbeddingsBox(
+    embeddings: List<FloatArray>,
+    modifier: Modifier = Modifier
+) {
+
+    val clipboard = LocalClipboardManager.current
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(350.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+
+            IconButton(
+                onClick = {
+
+                    val text = buildString {
+
+                        embeddings.forEachIndexed { index, vector ->
+
+                            append("Chunk $index\n")
+                            append(vector.joinToString(", "))
+                            append("\n\n")
+                        }
+                    }
+
+                    clipboard.setText(
+                        AnnotatedString(text)
+                    )
+                },
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    Icons.Default.ContentCopy,
+                    contentDescription = "Copy"
+                )
+            }
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        top = 48.dp,
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = 16.dp
+                    ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                items(
+                    embeddings.size
+                ) { index ->
+
+                    val vector = embeddings[index]
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+
+                        Column(
+                            modifier = Modifier.padding(12.dp)
+                        ) {
+
+                            Text(
+                                text = "Chunk $index",
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Spacer(
+                                modifier = Modifier.height(8.dp)
+                            )
+
+                            Text(
+                                text = vector.joinToString(
+                                    separator = ", "
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

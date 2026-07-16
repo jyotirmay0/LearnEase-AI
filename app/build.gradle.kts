@@ -21,11 +21,18 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        // Store your Gemini API key in local.properties as GEMINI_API_KEY=your_key
+        // Read Gemini API key from local.properties
+        val localPropsFile = rootProject.file("local.properties")
+        val apiKey = if (localPropsFile.exists()) {
+            localPropsFile.readLines()
+                .firstOrNull { it.startsWith("GEMINI_API_KEY") }
+                ?.substringAfter("=")
+                ?.trim() ?: ""
+        } else ""
         buildConfigField(
             "String",
             "GEMINI_API_KEY",
-            "\"${project.findProperty("GEMINI_API_KEY") ?: ""}\""
+            "\"$apiKey\""
         )
     }
 
