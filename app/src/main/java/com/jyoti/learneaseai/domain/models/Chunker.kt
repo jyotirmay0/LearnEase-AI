@@ -1,10 +1,9 @@
 package com.jyoti.learneaseai.domain
 
-
-
 object Chunker {
-    private const val DEFAULT_CHUNK_SIZE = 500      // characters per chunk
-    private const val DEFAULT_OVERLAP = 100         // overlap between consecutive chunks
+
+    private const val DEFAULT_CHUNK_SIZE = 500      // characters
+    private const val DEFAULT_OVERLAP = 100         // characters
 
     fun chunk(
         text: String,
@@ -13,36 +12,77 @@ object Chunker {
     ): List<String> {
 
         if (text.isBlank()) return emptyList()
-        val cleanedText = text
+
+        val cleaned = text
             .replace(Regex("\\s+"), " ")
             .trim()
-        if (cleanedText.length <= chunkSize) {
-            return listOf(cleanedText)
+
+        if (cleaned.length <= chunkSize) {
+            return listOf(cleaned)
         }
+
         val chunks = mutableListOf<String>()
-        var startIndex = 0
-        while (startIndex < cleanedText.length) {
-            var endIndex = minOf(startIndex + chunkSize, cleanedText.length)
-            // Try to break at a sentence boundary (. ! ?)
-            if (endIndex < cleanedText.length) {
-                val lastPeriod = cleanedText.lastIndexOf(". ", endIndex, startIndex)
-                val lastExclamation = cleanedText.lastIndexOf("! ", endIndex, startIndex)
-                val lastQuestion = cleanedText.lastIndexOf("? ", endIndex, startIndex)
-                val bestBreak = maxOf(lastPeriod, lastExclamation, lastQuestion)
-                if (bestBreak > startIndex) {
-                    endIndex = bestBreak + 1 // include the punctuation
-                }
+        var start = 0
+
+        while (start < cleaned.length) {
+
+            // Last chunk
+            if (cleaned.length - start <= chunkSize) {
+                chunks.add(cleaned.substring(start).trim())
+                break
             }
-            chunks.add(cleanedText.substring(startIndex, endIndex).trim())
-            // Move forward by (endIndex - startIndex - overlap), but at least 1 char
-            startIndex += maxOf(endIndex - startIndex - overlap, 1)
+
+            val tentativeEnd = minOf(start + chunkSize, cleaned.length)
+
+            val end = findBestBreak(cleaned, start, tentativeEnd)
+
+            chunks.add(cleaned.substring(start, end).trim())
+
+            if (end >= cleaned.length) break
+
+            // Overlap
+            start = maxOf(end - overlap, 0)
+
+            // Don't start in the middle of a word
+            while (
+                start < cleaned.length &&
+                start > 0 &&
+                cleaned[start] != ' ' &&
+                cleaned[start - 1] != ' '
+            ) {
+                start++
+            }
         }
+
         return chunks
     }
 
-    private fun String.lastIndexOf(str: String, endIndex: Int, startIndex: Int): Int {
-        val searchIn = this.substring(startIndex, endIndex)
-        val idx = searchIn.lastIndexOf(str)
-        return if (idx >= 0) startIndex + idx else -1
+    /**
+     * Try to end on a sentence.
+     * If impossible, end on a space.
+     */
+    private fun findBestBreak(
+        text: String,
+        start: Int,
+        tentativeEnd: Int
+    ): Int {
+
+        // Search backwards for sentence ending
+        for (i in tentativeEnd downTo start) {
+            val c = text[i - 1]
+            if (c == '.' || c == '!' || c == '?') {
+                return i
+            }
+        }
+
+        // Otherwise break on whitespace
+        for (i in tentativeEnd downTo start) {
+            if (text[i - 1].isWhitespace()) {
+                return i
+            }
+        }
+
+        // Fallback
+        return tentativeEnd
     }
 }

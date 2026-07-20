@@ -9,8 +9,10 @@ import com.jyoti.learneaseai.BuildConfig
 import com.jyoti.learneaseai.data.local.AppDatabase
 import com.jyoti.learneaseai.data.local.EmbeddingEntity
 import com.jyoti.learneaseai.data.remote.NetworkModule
+import com.jyoti.learneaseai.data.repository.ChatRepository
 import com.jyoti.learneaseai.data.repository.DocumentRepositoryImpl
 import com.jyoti.learneaseai.domain.Chunker
+import com.jyoti.learneaseai.domain.LocalLlmEngine
 import com.jyoti.learneaseai.pdf.PdfExatractor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,10 +37,40 @@ class UploadVM(application: Application) : AndroidViewModel(application) {
     private val _documentName = MutableStateFlow("")
     val documentName = _documentName.asStateFlow()
 
+    // ── Q&A state ─────────────────────────────────────────────────
+    private val _answer = MutableStateFlow("")
+    val answer = _answer.asStateFlow()
+
+    private val _isAnswering = MutableStateFlow(false)
+    val isAnswering = _isAnswering.asStateFlow()
+
+    private val _answerError = MutableStateFlow<String?>(null)
+    val answerError = _answerError.asStateFlow()
+
     val api = NetworkModule.api
     val repo: DocumentRepositoryImpl = DocumentRepositoryImpl()
     private val db = AppDatabase.getInstance(application)
     private val embeddingDao = db.embeddingDao()
+
+    // Local LLM engine + ChatRepository
+    private val localLlm = LocalLlmEngine(application)
+    private val chatRepository = ChatRepository(
+        api = api,
+        apiKey = BuildConfig.GEMINI_API_KEY,
+        embeddingDao = embeddingDao,
+        localLlm = localLlm
+    )
+
+    init {
+        // Start loading the local model in the background
+        viewModelScope.launch {
+            try {
+                localLlm.initialize()
+            } catch (e: Exception) {
+                Log.e("UploadVM", "Failed to load local LLM: ${e.message}", e)
+            }
+        }
+    }
 
     //select the pdf pick
     fun onPdfSelected(uri: Uri) {
@@ -84,6 +116,27 @@ class UploadVM(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Ask a question against the uploaded documents.
+     * Runs the full RAG pipeline: embed query → similarity → prompt → local LLM.
+     */
+    fun askQuestion(question: String) {
+        if (question.isBlank()) return
+        viewModelScope.launch {
+            _isAnswering.value = true
+            _answer.value = ""
+            _answerError.value = null
+            try {
+                _answer.value = chatRepository.answer(question)
+            } catch (e: Exception) {
+                Log.e("ask", "Answer failed: ${e.message}", e)
+                _answerError.value = e.message ?: "Something went wrong"
+            } finally {
+                _isAnswering.value = false
+            }
+        }
+    }
+
     private suspend fun saveEmbeddingsToDb() {
         val currentChunks = _chunks.value
         val currentEmbeddings = _embedding.value
@@ -107,5 +160,10 @@ class UploadVM(application: Application) : AndroidViewModel(application) {
         embeddingDao.insertAll(entities)
         _isSaved.value = true
         Log.d("embed", "Saved ${entities.size} embeddings to database for: $docName")
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        localLlm.close()
     }
 }

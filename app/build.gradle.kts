@@ -92,5 +92,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     // PdfBox Android
     implementation(libs.pdfbox.android)
+    // LiteRT-LM (on-device LLM)
+    implementation(libs.litert.lm)
     // Testing
 }

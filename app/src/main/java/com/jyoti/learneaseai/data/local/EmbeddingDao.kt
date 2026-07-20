@@ -18,6 +18,9 @@ interface EmbeddingDao {
     @Query("SELECT * FROM embeddings ORDER BY chunkIndex ASC")
     fun getAll(): Flow<List<EmbeddingEntity>>
 
+    @Query("SELECT * FROM embeddings ORDER BY chunkIndex ASC")
+    suspend fun getAllOnce(): List<EmbeddingEntity>
+
     @Query("DELETE FROM embeddings WHERE documentName = :docName")
     suspend fun deleteByDocument(docName: String)
 
