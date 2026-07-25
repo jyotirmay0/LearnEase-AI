@@ -52,6 +52,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.jyoti.learneaseai.pdf.getFileName
+
 @Preview(showBackground = true)
 @Composable
 fun UploadScreen() {
@@ -73,7 +75,7 @@ fun UploadScreen() {
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         uri?.let { it: Uri ->
-            val fileName = uri.lastPathSegment ?: "document.pdf"
+            val fileName = getFileName(context, it)
             result.value = it
             vm.onPdfSelected(it)
             vm.pdfExtract(uri)

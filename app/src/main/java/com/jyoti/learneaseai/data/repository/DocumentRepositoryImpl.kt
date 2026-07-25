@@ -1,19 +1,26 @@
 package com.jyoti.learneaseai.data.repository
 
+import android.app.Application
 import android.util.Log
+import com.jyoti.learneaseai.data.local.AppDatabase
 import com.jyoti.learneaseai.data.remote.Content
 import com.jyoti.learneaseai.data.remote.EmbedRequest
 import com.jyoti.learneaseai.data.remote.GeminiApi
 import com.jyoti.learneaseai.data.remote.Part
+import com.jyoti.learneaseai.domain.models.Document
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import retrofit2.HttpException
 
-class DocumentRepositoryImpl {
+class DocumentRepositoryImpl(  private val db: AppDatabase) {
 
+
+    private val embeddingDao = db.embeddingDao()
     suspend fun embedChunksThrottled(
         chunks: List<String>, api: GeminiApi, apiKey: String, concurrency: Int = 3
     ): List<FloatArray> = coroutineScope {
@@ -55,4 +62,19 @@ class DocumentRepositoryImpl {
         }
         throw lastException ?: Exception("Embedding failed after $maxRetries retries")
     }
-}
+
+    fun getAllDoc(): Flow<List<Document>> {
+        return embeddingDao.getAll().map { entities ->
+            entities.map {
+                    entity ->
+                Document(
+                    id = entity.id,
+                    name = entity.documentName
+                )
+            }
+        }
+
+}
+
+
+}

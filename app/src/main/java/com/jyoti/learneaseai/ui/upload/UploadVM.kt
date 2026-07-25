@@ -13,12 +13,15 @@ import com.jyoti.learneaseai.data.repository.ChatRepository
 import com.jyoti.learneaseai.data.repository.DocumentRepositoryImpl
 import com.jyoti.learneaseai.domain.Chunker
 import com.jyoti.learneaseai.domain.LocalLlmEngine
+import com.jyoti.learneaseai.domain.models.Document
 import com.jyoti.learneaseai.pdf.PdfExatractor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlin.collections.emptyList
+
 
 class UploadVM(application: Application) : AndroidViewModel(application) {
     private val _selectedPdfUri = MutableStateFlow<Uri?>(null)
@@ -37,6 +40,9 @@ class UploadVM(application: Application) : AndroidViewModel(application) {
     private val _documentName = MutableStateFlow("")
     val documentName = _documentName.asStateFlow()
 
+    private val _listOfPdf=MutableStateFlow<List<Document>>(emptyList())
+    val listOfPdf = _listOfPdf.asStateFlow()
+
     // ── Q&A state ─────────────────────────────────────────────────
     private val _answer = MutableStateFlow("")
     val answer = _answer.asStateFlow()
@@ -48,8 +54,9 @@ class UploadVM(application: Application) : AndroidViewModel(application) {
     val answerError = _answerError.asStateFlow()
 
     val api = NetworkModule.api
-    val repo: DocumentRepositoryImpl = DocumentRepositoryImpl()
+
     private val db = AppDatabase.getInstance(application)
+    val DocRepo: DocumentRepositoryImpl = DocumentRepositoryImpl(db)
     private val embeddingDao = db.embeddingDao()
 
     // Local LLM engine + ChatRepository
@@ -70,6 +77,7 @@ class UploadVM(application: Application) : AndroidViewModel(application) {
                 Log.e("UploadVM", "Failed to load local LLM: ${e.message}", e)
             }
         }
+        getAllPdf()
     }
 
     //select the pdf pick
@@ -103,7 +111,7 @@ class UploadVM(application: Application) : AndroidViewModel(application) {
                 // Wait until chunks are available
                 _chunks.first { it.isNotEmpty() }.let { chunks ->
                     Log.d("embed", "embedding viewmodel called")
-                    _embedding.value = repo.embedChunksThrottled(
+                    _embedding.value = DocRepo.embedChunksThrottled(
                         chunks, api, apiKey = BuildConfig.GEMINI_API_KEY
                     )
                 }
@@ -165,5 +173,22 @@ class UploadVM(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         localLlm.close()
+    }
+
+    fun getAllPdf(){
+        viewModelScope.launch {
+            DocRepo.getAllDoc().collect { documents ->
+                documents.forEach {
+                    Log.d("Documents", it.name)
+                }
+                _listOfPdf.value=documents
+
+        }
+
+
+
+        }
+
+
     }
 }
