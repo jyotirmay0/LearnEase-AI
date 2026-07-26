@@ -6,6 +6,7 @@ import com.jyoti.learneaseai.data.local.AppDatabase
 import com.jyoti.learneaseai.data.remote.Content
 import com.jyoti.learneaseai.data.remote.EmbedRequest
 import com.jyoti.learneaseai.data.remote.GeminiApi
+import com.jyoti.learneaseai.data.remote.NetworkModule.api
 import com.jyoti.learneaseai.data.remote.Part
 import com.jyoti.learneaseai.domain.models.Document
 import kotlinx.coroutines.Dispatchers
@@ -17,12 +18,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import retrofit2.HttpException
 
-class DocumentRepositoryImpl(  private val db: AppDatabase) {
+class DocumentRepositoryImpl(  private val db: AppDatabase,
+                               api: GeminiApi) {
 
 
     private val embeddingDao = db.embeddingDao()
     suspend fun embedChunksThrottled(
-        chunks: List<String>, api: GeminiApi, apiKey: String, concurrency: Int = 3
+        chunks: List<String>, concurrency: Int = 3
     ): List<FloatArray> = coroutineScope {
         chunks.chunked(concurrency).flatMapIndexed { waveIndex, wave ->
             Log.d("embed", "Processing wave ${waveIndex + 1}, chunks: ${wave.size}")
@@ -32,20 +34,19 @@ class DocumentRepositoryImpl(  private val db: AppDatabase) {
 
             wave.map { chunk ->
                 async(Dispatchers.IO) {
-                    embedWithRetry(api, apiKey, chunk)
+                    embedWithRetry(  chunk)
                 }
             }.awaitAll()
         }
     }
 
     private suspend fun embedWithRetry(
-        api: GeminiApi, apiKey: String, chunk: String, maxRetries: Int = 3
+       chunk: String, maxRetries: Int = 3
     ): FloatArray {
         var lastException: Exception? = null
         repeat(maxRetries) { attempt ->
             try {
-                return api.embedContent(
-                    apiKey, EmbedRequest(
+                return api.embedContent(EmbedRequest(
                         content = Content(listOf(Part(chunk))),
                     )
                 ).embedding.values.toFloatArray()

@@ -73,6 +73,7 @@ fun UploadScreen() {
     val isAnswering by vm.isAnswering.collectAsState()
     val answerError by vm.answerError.collectAsState()
     val documents by vm.listOfPdf.collectAsState()
+    val docName by vm.documentName.collectAsState()
 
     var questionText by remember { mutableStateOf("") }
 
@@ -83,7 +84,7 @@ fun UploadScreen() {
         uri?.let { it: Uri ->
             val fileName = getFileName(context, it)
             result.value = it
-            vm.onPdfSelected(it)
+            vm.onPdfSelected(it,fileName)
             vm.pdfExtract(uri)
         }
     }
@@ -142,7 +143,7 @@ fun UploadScreen() {
 
                          }
                     pdfUri?.path.let { image ->
-                        Text(text = "Document Path: "+image.toString())
+                        Text(text = "Document Path: "+image.toString()+docName)
                     }
                 }
 

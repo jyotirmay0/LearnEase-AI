@@ -56,7 +56,7 @@ class UploadVM(application: Application) : AndroidViewModel(application) {
     val api = NetworkModule.api
 
     private val db = AppDatabase.getInstance(application)
-    val DocRepo: DocumentRepositoryImpl = DocumentRepositoryImpl(db)
+    val DocRepo: DocumentRepositoryImpl = DocumentRepositoryImpl(db,api)
     private val embeddingDao = db.embeddingDao()
 
     // Local LLM engine + ChatRepository
@@ -81,9 +81,9 @@ class UploadVM(application: Application) : AndroidViewModel(application) {
     }
 
     //select the pdf pick
-    fun onPdfSelected(uri: Uri) {
+    fun onPdfSelected(uri: Uri,fileName: String) {
         _selectedPdfUri.value = uri
-        _documentName.value = uri.lastPathSegment ?: "document.pdf"
+        _documentName.value = fileName
     }
 
     //extract the pdf -> text
@@ -112,7 +112,7 @@ class UploadVM(application: Application) : AndroidViewModel(application) {
                 _chunks.first { it.isNotEmpty() }.let { chunks ->
                     Log.d("embed", "embedding viewmodel called")
                     _embedding.value = DocRepo.embedChunksThrottled(
-                        chunks, api, apiKey = BuildConfig.GEMINI_API_KEY
+                        chunks
                     )
                 }
 

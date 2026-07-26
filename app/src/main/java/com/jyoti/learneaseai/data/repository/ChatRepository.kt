@@ -109,7 +109,7 @@ class ChatRepository(
             content = Content(parts = listOf(Part(text = question))),
             taskType = "RETRIEVAL_QUERY"
         )
-        return api.embedContent(apiKey, request)
+        return api.embedContent( request)
             .embedding.values.toFloatArray()
     }
 }

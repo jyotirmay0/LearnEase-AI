@@ -12,7 +12,6 @@ interface GeminiApi {
 
         @POST("v1beta/models/gemini-embedding-2:embedContent")
         suspend fun embedContent(
-            @Header("x-goog-api-key") apiKey: String,
             @Body request: EmbedRequest
         ): EmbedResponse
     }
