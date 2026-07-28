@@ -67,7 +67,6 @@ fun UploadScreen() {
     val vm: UploadVM = viewModel()
 
     val pdfUri by vm.selectedPdfUri.collectAsState()
-    val pdfText by vm.pdfText.collectAsState()
     val embed by vm.embedding.collectAsState()
     val answer by vm.answer.collectAsState()
     val isAnswering by vm.isAnswering.collectAsState()
@@ -85,7 +84,7 @@ fun UploadScreen() {
             val fileName = getFileName(context, it)
             result.value = it
             vm.onPdfSelected(it,fileName)
-            vm.pdfExtract(uri)
+
         }
     }
 
@@ -152,10 +151,6 @@ fun UploadScreen() {
             item {
 
 
-                ExtractedTextBox(
-                    text = pdfText,
-                    modifier = Modifier.padding(16.dp)
-                )
             }
 
 
@@ -183,7 +178,7 @@ fun UploadScreen() {
 
                 Button(
                     onClick = {
-                        vm.embedding()
+//                        vm.embedding()
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -229,7 +224,7 @@ fun UploadScreen() {
                     )
                     IconButton(
                         onClick = {
-                            vm.askQuestion(questionText)
+//                            vm.askQuestion(questionText)
                         },
                         enabled = questionText.isNotBlank() && !isAnswering
                     ) {
@@ -511,7 +506,7 @@ fun AnswerBox(
 
 @Composable
 fun DocumentCard(
-    id: Int,
+    id: String,
     name: String,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},

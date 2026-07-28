@@ -1,4 +1,4 @@
-package com.jyoti.learneaseai.data.remote
+package com.jyoti.learneaseai.data.remote.model
 
 data class EmbedRequest(
     val model: String="models/gemini-embedding-001",

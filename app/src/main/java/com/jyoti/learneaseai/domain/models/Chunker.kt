@@ -5,6 +5,11 @@ object Chunker {
     private const val DEFAULT_CHUNK_SIZE = 500      // characters
     private const val DEFAULT_OVERLAP = 100         // characters
 
+    /**
+     * Memory-efficient chunker that avoids creating a full cleaned copy of the text.
+     * Instead, it streams through the input character-by-character, collapsing
+     * whitespace on-the-fly and emitting chunks as it goes.
+     */
     fun chunk(
         text: String,
         chunkSize: Int = DEFAULT_CHUNK_SIZE,
@@ -13,44 +18,62 @@ object Chunker {
 
         if (text.isBlank()) return emptyList()
 
-        val cleaned = text
-            .replace(Regex("\\s+"), " ")
-            .trim()
-
-        if (cleaned.length <= chunkSize) {
-            return listOf(cleaned)
-        }
-
         val chunks = mutableListOf<String>()
-        var start = 0
 
-        while (start < cleaned.length) {
+        // We'll build chunks incrementally without holding the full cleaned text.
+        // 'buffer' holds the current window we're building a chunk from.
+        val buffer = StringBuilder(chunkSize + overlap)
+        var prevWasSpace = true  // treat start as if preceded by space to skip leading whitespace
 
-            // Last chunk
-            if (cleaned.length - start <= chunkSize) {
-                chunks.add(cleaned.substring(start).trim())
-                break
+        for (char in text) {
+            if (char.isWhitespace()) {
+                if (!prevWasSpace && buffer.isNotEmpty()) {
+                    buffer.append(' ')
+                }
+                prevWasSpace = true
+            } else {
+                buffer.append(char)
+                prevWasSpace = false
             }
 
-            val tentativeEnd = minOf(start + chunkSize, cleaned.length)
+            // When buffer is large enough, try to emit a chunk
+            if (buffer.length >= chunkSize) {
+                val content = buffer.toString().trim()
+                if (content.isNotEmpty()) {
+                    val breakIdx = findBestBreak(content, 0, minOf(chunkSize, content.length))
+                    val chunk = content.substring(0, breakIdx).trim()
+                    if (chunk.isNotEmpty()) {
+                        chunks.add(chunk)
+                    }
 
-            val end = findBestBreak(cleaned, start, tentativeEnd)
+                    // Keep overlap portion for the next chunk
+                    val remaining = content.substring(maxOf(breakIdx - overlap, 0))
+                    buffer.clear()
+                    buffer.append(remaining)
+                }
+            }
+        }
 
-            chunks.add(cleaned.substring(start, end).trim())
-
-            if (end >= cleaned.length) break
-
-            // Overlap
-            start = maxOf(end - overlap, 0)
-
-            // Don't start in the middle of a word
-            while (
-                start < cleaned.length &&
-                start > 0 &&
-                cleaned[start] != ' ' &&
-                cleaned[start - 1] != ' '
-            ) {
-                start++
+        // Flush whatever is left in the buffer
+        val remaining = buffer.toString().trim()
+        if (remaining.isNotEmpty()) {
+            // If the remaining text is too large, chunk it too
+            if (remaining.length > chunkSize) {
+                var start = 0
+                while (start < remaining.length) {
+                    if (remaining.length - start <= chunkSize) {
+                        val piece = remaining.substring(start).trim()
+                        if (piece.isNotEmpty()) chunks.add(piece)
+                        break
+                    }
+                    val tentativeEnd = minOf(start + chunkSize, remaining.length)
+                    val end = findBestBreak(remaining, start, tentativeEnd)
+                    val piece = remaining.substring(start, end).trim()
+                    if (piece.isNotEmpty()) chunks.add(piece)
+                    start = maxOf(end - overlap, start + 1)
+                }
+            } else {
+                chunks.add(remaining)
             }
         }
 
@@ -68,7 +91,7 @@ object Chunker {
     ): Int {
 
         // Search backwards for sentence ending
-        for (i in tentativeEnd downTo start) {
+        for (i in tentativeEnd downTo start + 1) {
             val c = text[i - 1]
             if (c == '.' || c == '!' || c == '?') {
                 return i
@@ -76,7 +99,7 @@ object Chunker {
         }
 
         // Otherwise break on whitespace
-        for (i in tentativeEnd downTo start) {
+        for (i in tentativeEnd downTo start + 1) {
             if (text[i - 1].isWhitespace()) {
                 return i
             }

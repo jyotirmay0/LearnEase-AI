@@ -86,7 +86,7 @@ object PromptBuilder {
         var sectionNum = 1
 
         for (chunk in chunks) {
-            val section = "[Section $sectionNum – ${chunk.documentName}]\n${chunk.chunkText}\n\n"
+            val section = "[Section $sectionNum – ${chunk.documentId}]\n${chunk.chunkText}\n\n"
             if (usedChars + section.length > maxChars) break
             sb.append(section)
             usedChars += section.length

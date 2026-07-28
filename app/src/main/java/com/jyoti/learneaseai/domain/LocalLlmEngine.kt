@@ -5,6 +5,7 @@ import android.util.Log
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withContext
 import java.io.File
+import javax.inject.Inject
 
 /**
  * Wrapper around LiteRT-LM [Engine] for on-device inference
@@ -24,7 +26,7 @@ import java.io.File
  *  2. Use [generate] (streaming) or [generateFull] (blocking).
  *  3. Call [close] when the engine is no longer needed.
  */
-class LocalLlmEngine(private val context: Context) {
+class LocalLlmEngine @Inject constructor(@ApplicationContext private val context: Context) {
 
     companion object {
         private const val TAG = "LocalLlmEngine"
@@ -48,6 +50,8 @@ class LocalLlmEngine(private val context: Context) {
      *
      * Call this on a background thread — model loading can take 5-15 seconds.
      */
+
+
     suspend fun initialize() = withContext(Dispatchers.IO) {
         if (_isReady.value) {
             Log.d(TAG, "Engine already initialised — skipping")

@@ -2,10 +2,10 @@ package com.jyoti.learneaseai.data.remote
 
 
 
+import com.jyoti.learneaseai.data.remote.model.EmbedRequest
+import com.jyoti.learneaseai.data.remote.model.EmbedResponse
 import retrofit2.http.Body
-import retrofit2.http.Header
 import retrofit2.http.POST
-import retrofit2.http.Query
 
 
 interface GeminiApi {
