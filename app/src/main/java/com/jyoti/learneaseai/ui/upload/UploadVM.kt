@@ -118,10 +118,7 @@ class UploadVM@Inject constructor(private val docRepo: DocumentRepositoryImpl,
         }
     }
 
-    /**
-     * Ask a question against the uploaded documents.
-     * Runs the full RAG pipeline: embed query → similarity → prompt → local LLM.
-     */
+
 //    fun askQuestion(question: String) {
 //        if (question.isBlank()) return
 //        viewModelScope.launch {
