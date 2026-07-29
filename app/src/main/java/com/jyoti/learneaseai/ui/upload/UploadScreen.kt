@@ -181,10 +181,6 @@ fun UploadScreen(
 
 
 
-            item {
-                EmbeddingsBox(embed)
-            }
-
         }
 
         Box(

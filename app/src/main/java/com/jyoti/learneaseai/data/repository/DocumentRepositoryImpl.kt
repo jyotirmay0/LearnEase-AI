@@ -23,6 +23,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.security.MessageDigest
 import java.util.UUID
@@ -140,7 +141,22 @@ class DocumentRepositoryImpl @Inject constructor(
         }
 
 }
+    suspend fun getDocumentbyId(docID: String): DocumentEntity?{
+        return withContext(Dispatchers.IO){
+           documentDao.getByDocID(docID)
+        }
 
+
+    }
+
+    suspend fun getChunksbyDocumentId(docId: String): List<String>{
+        return withContext(Dispatchers.IO){
+            chunkDao.getChunksForDocument(docId).map {
+                chunkEntity ->
+                chunkEntity.text
+            }
+        }
+    }
 
 
     suspend fun saveEmbeddingsToDb(chunks: List<String>, embeddings: List<FloatArray>,docId: String) {

@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -47,34 +48,33 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
-    title: String,
+    docId: String,
 
     onBackClick: () -> Unit = {},
     onAskAiClick: (String) -> Unit
 ) {
-    val summaryItems = listOf(
-        "Revenue Growth: Overall revenue increased by 15% year-over-year in Q3, primarily driven by a surge in enterprise software subscriptions and successful expansion into the APAC region.",
-        "Cost Optimization: Operational expenses decreased by 4% due to the successful implementation of AI-driven supply chain management tools and consolidation of cloud infrastructure.",
-        "Strategic Acquisition: The acquisition of 'DataStream Inc.' was finalized in September, expected to add approximately \$5M to Q4 recurring revenue and expand the data analytics product suite.",
-        "Q4 Projections: Forecasting a more conservative 8-10% growth for Q4 due to anticipated seasonal fluctuations and planned R&D investments in new generative AI capabilities."
-    )
-    val rawTextItems = listOf(
-        "Section 1: This document contains the raw extracted text from the uploaded PDF file for reference and review.",
-        "Section 2: Additional raw content paragraphs would appear here as individual list items."
-    )
+
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Summary", "Raw Text")
+
+
+   val  vm: DetailVM= hiltViewModel()
+    val docName by vm.docName.collectAsState()
+    val chunks by vm.chunks.collectAsState()
+
+
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = title,
+                        text = docName,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
@@ -96,7 +96,7 @@ fun DetailScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { onAskAiClick(title) },
+                onClick = { onAskAiClick(docId) },
                 containerColor = Color(0xFF1C1B2E),
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp)
@@ -125,7 +125,7 @@ fun DetailScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val currentItems = if (selectedTab == 0) summaryItems else rawTextItems
+            val currentItems = if (selectedTab == 0) chunks else chunks
 
             LazyColumn(
                 modifier = Modifier
@@ -233,7 +233,7 @@ private fun BulletPointItem(text: String) {
 private fun DetailScreenPreview() {
 
     DetailScreen(
-        title = "Q3_Financial_Report_Final_v2.pdf",
+        docId = "Q3_Financial_Report_Final_v2.pdf",
         onAskAiClick = {},
 
 
