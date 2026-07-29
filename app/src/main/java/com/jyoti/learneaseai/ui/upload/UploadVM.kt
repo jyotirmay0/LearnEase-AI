@@ -25,10 +25,10 @@ import kotlin.collections.emptyList
 
 
 @HiltViewModel
-class UploadVM@Inject constructor(private val docRepo: DocumentRepositoryImpl,
+class UploadVM @Inject constructor(private val docRepo: DocumentRepositoryImpl,
                                   private val localLlm: LocalLlmEngine,
                                   @ApplicationContext private val context: Context,
-                                  private val chatRepository :ChatRepository) : ViewModel () {
+                                 ) : ViewModel () {
     private val _selectedPdfUri = MutableStateFlow<Uri?>(null)
     val selectedPdfUri = _selectedPdfUri.asStateFlow()
     private val _pdfText = MutableStateFlow<String>("")

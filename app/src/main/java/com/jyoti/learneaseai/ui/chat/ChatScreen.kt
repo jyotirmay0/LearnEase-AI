@@ -65,11 +65,25 @@ data class ChatMessage(
 @Composable
 fun ChatScreen(
     title: String = "",
-    messages: List<ChatMessage> = emptyList(),
-    isLoading: Boolean = false,
+
     onSendMessage: (String) -> Unit = {},
     onCloseClick: () -> Unit = {}
 ) {
+    val messages = listOf(
+        ChatMessage(
+            text = "What would you like to know about this document?",
+            isUser = false
+        ),
+        ChatMessage(
+            text = "What are the key deliverables mentioned in section 2?",
+            isUser = true
+        ),
+        ChatMessage(
+            text = "Based on Section 2, the three key deliverables are:\n\n1. A finalized architectural diagram by Q4.\n2. A complete audit of the legacy codebase.\n3. The preliminary rollout of the new authentication service.",
+            isUser = false
+        )
+    )
+    val isLoading: Boolean = true
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
@@ -262,23 +276,9 @@ private fun ChatInputBar(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun ChatScreenPreview() {
-    val sampleMessages = listOf(
-        ChatMessage(
-            text = "What would you like to know about this document?",
-            isUser = false
-        ),
-        ChatMessage(
-            text = "What are the key deliverables mentioned in section 2?",
-            isUser = true
-        ),
-        ChatMessage(
-            text = "Based on Section 2, the three key deliverables are:\n\n1. A finalized architectural diagram by Q4.\n2. A complete audit of the legacy codebase.\n3. The preliminary rollout of the new authentication service.",
-            isUser = false
-        )
-    )
+
     ChatScreen(
         title = "Ask about Q3 Financial Brief",
-        messages = sampleMessages,
-        isLoading = true
+
     )
 }

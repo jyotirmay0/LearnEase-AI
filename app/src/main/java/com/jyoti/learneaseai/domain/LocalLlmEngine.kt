@@ -16,21 +16,14 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
+import javax.inject.Singleton
 
-/**
- * Wrapper around LiteRT-LM [Engine] for on-device inference
- * using the Gemma 4 E2B model.
- *
- * Lifecycle:
- *  1. Call [initialize] once (from a coroutine — it's heavy).
- *  2. Use [generate] (streaming) or [generateFull] (blocking).
- *  3. Call [close] when the engine is no longer needed.
- */
+
+@Singleton
 class LocalLlmEngine @Inject constructor(@ApplicationContext private val context: Context) {
 
     companion object {
         private const val TAG = "LocalLlmEngine"
-        /** Name of the .litertlm file placed in the assets/ folder */
         private const val MODEL_ASSET_NAME = "gemma-4-E2B-it.litertlm"
     }
 

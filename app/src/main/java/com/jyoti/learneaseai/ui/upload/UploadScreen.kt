@@ -62,17 +62,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.room.util.TableInfo
 import com.jyoti.learneaseai.pdf.getFileName
 import kotlin.io.encoding.Base64
 
-@Preview(showBackground = true)
+
 @Composable
-fun UploadScreen() {
+fun UploadScreen(
+    onDocumentClick: (String) -> Unit
+) {
 
     val context = LocalContext.current
-    val vm: UploadVM = viewModel()
+    val vm: UploadVM = hiltViewModel()
 
     val pdfUri by vm.selectedPdfUri.collectAsState()
     val embed by vm.embedding.collectAsState()
@@ -169,7 +171,7 @@ fun UploadScreen() {
                     id = document.id,
                     name = document.name,
                     onClick = {
-                        // Open document
+                        onDocumentClick(document.id)
                     },
                     onMenuClick = {
                         // Show menu

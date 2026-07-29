@@ -52,11 +52,20 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun DetailScreen(
     title: String,
-    summaryItems: List<String>,
-    rawTextItems: List<String>,
+
     onBackClick: () -> Unit = {},
-    onAskAiClick: () -> Unit = {}
+    onAskAiClick: (String) -> Unit
 ) {
+    val summaryItems = listOf(
+        "Revenue Growth: Overall revenue increased by 15% year-over-year in Q3, primarily driven by a surge in enterprise software subscriptions and successful expansion into the APAC region.",
+        "Cost Optimization: Operational expenses decreased by 4% due to the successful implementation of AI-driven supply chain management tools and consolidation of cloud infrastructure.",
+        "Strategic Acquisition: The acquisition of 'DataStream Inc.' was finalized in September, expected to add approximately \$5M to Q4 recurring revenue and expand the data analytics product suite.",
+        "Q4 Projections: Forecasting a more conservative 8-10% growth for Q4 due to anticipated seasonal fluctuations and planned R&D investments in new generative AI capabilities."
+    )
+    val rawTextItems = listOf(
+        "Section 1: This document contains the raw extracted text from the uploaded PDF file for reference and review.",
+        "Section 2: Additional raw content paragraphs would appear here as individual list items."
+    )
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Summary", "Raw Text")
 
@@ -87,7 +96,7 @@ fun DetailScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = onAskAiClick,
+                onClick = { onAskAiClick(title) },
                 containerColor = Color(0xFF1C1B2E),
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp)
@@ -222,19 +231,11 @@ private fun BulletPointItem(text: String) {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun DetailScreenPreview() {
-    val sampleSummary = listOf(
-        "Revenue Growth: Overall revenue increased by 15% year-over-year in Q3, primarily driven by a surge in enterprise software subscriptions and successful expansion into the APAC region.",
-        "Cost Optimization: Operational expenses decreased by 4% due to the successful implementation of AI-driven supply chain management tools and consolidation of cloud infrastructure.",
-        "Strategic Acquisition: The acquisition of 'DataStream Inc.' was finalized in September, expected to add approximately \$5M to Q4 recurring revenue and expand the data analytics product suite.",
-        "Q4 Projections: Forecasting a more conservative 8-10% growth for Q4 due to anticipated seasonal fluctuations and planned R&D investments in new generative AI capabilities."
-    )
-    val sampleRawText = listOf(
-        "Section 1: This document contains the raw extracted text from the uploaded PDF file for reference and review.",
-        "Section 2: Additional raw content paragraphs would appear here as individual list items."
-    )
+
     DetailScreen(
         title = "Q3_Financial_Report_Final_v2.pdf",
-        summaryItems = sampleSummary,
-        rawTextItems = sampleRawText
+        onAskAiClick = {},
+
+
     )
 }
