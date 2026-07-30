@@ -1,8 +1,12 @@
-package com.jyoti.learneaseai.domain
+package com.jyoti.learneaseai.data.repository
 
-import com.jyoti.learneaseai.data.local.EmbeddingDao
-import com.jyoti.learneaseai.data.local.EmbeddingEntity
+import com.jyoti.learneaseai.data.local.ChunkDao
+import com.jyoti.learneaseai.data.local.ChunkEntity
+import com.jyoti.learneaseai.data.local.DocumentDao
+import com.jyoti.learneaseai.domain.CosineSimilarity
+import com.jyoti.learneaseai.domain.PromptBuilder
 import com.jyoti.learneaseai.domain.models.ScoredChunk
+import javax.inject.Inject
 
 /**
  * Use-case that implements the full RAG retrieval pipeline:
@@ -10,23 +14,26 @@ import com.jyoti.learneaseai.domain.models.ScoredChunk
  * 1. Embed the user's query (embedding provided by the caller).
  * 2. Load all stored document embeddings from Room.
  * 3. Rank them via cosine similarity.
- * 4. Return the top-K [ScoredChunk]s ready for prompt building.
+ * 4. Return the top-K [com.jyoti.learneaseai.domain.models.ScoredChunk]s ready for prompt building.
  */
-class RetrieveRelevantChunksUseCase(
-    private val embeddingDao: EmbeddingDao
+class RetrievalReposatory
+    @Inject constructor(
+    private val documentDao: DocumentDao,
+    private val chunkDao: ChunkDao
 ) {
 
     /**
      * @param queryEmbedding The embedding of the user's query (768-d float vector).
      * @param topK           How many chunks to return.
-     * @return A list of [ScoredChunk] sorted by relevance (highest first).
+     * @return A list of [com.jyoti.learneaseai.domain.models.ScoredChunk] sorted by relevance (highest first).
      */
-    suspend fun execute(
+    suspend fun retrieve(
         queryEmbedding: FloatArray,
-        topK: Int = 5
+        topK: Int = 5,
+        docId:String,
     ): List<ScoredChunk> {
-        // 1. Fetch all stored embeddings (one-shot, no Flow)
-        val allEntities: List<EmbeddingEntity> = embeddingDao.getAllOnce()
+
+        val allEntities: List<ChunkEntity> = chunkDao.getChunksForDocument(docId)
 
         if (allEntities.isEmpty()) return emptyList()
 
@@ -41,10 +48,10 @@ class RetrieveRelevantChunksUseCase(
         return scoredIndices.map { scored ->
             val entity = allEntities[scored.index]
             ScoredChunk(
-                chunkText = entity.chunkText,
+                chunkText = entity.text,
                 score = scored.score,
                 chunkIndex = entity.chunkIndex,
-                documentName = entity.documentName
+                documentId = entity.documentId
             )
         }
     }
@@ -55,9 +62,10 @@ class RetrieveRelevantChunksUseCase(
     suspend fun retrieveAndBuildPrompt(
         query: String,
         queryEmbedding: FloatArray,
-        topK: Int = 5
+        topK: Int = 5,
+        docID: String
     ): String {
-        val relevantChunks = execute(queryEmbedding, topK)
-        return PromptBuilder.build(query = query, relevantChunks = relevantChunks)
+        val relevantChunks = retrieve(queryEmbedding, topK,docID)
+        return PromptBuilder.build( relevantChunks = relevantChunks)
     }
 }

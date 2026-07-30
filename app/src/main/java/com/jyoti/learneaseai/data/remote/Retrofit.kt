@@ -1,21 +1,22 @@
 package com.jyoti.learneaseai.data.remote
 
+import com.jyoti.learneaseai.BuildConfig
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-object NetworkModule {
 
-    private const val BASE_URL =
-        "https://generativelanguage.googleapis.com/"
+class ApiKeyInterceptor : Interceptor {
 
-    val api: GeminiApi by lazy {
+    override fun intercept(chain: Interceptor.Chain): Response {
 
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(
-                GsonConverterFactory.create()
-            )
+        val request = chain.request()
+            .newBuilder()
+            .addHeader("x-goog-api-key", BuildConfig.GEMINI_API_KEY)
             .build()
-            .create(GeminiApi::class.java)
+
+        return chain.proceed(request)
     }
 }

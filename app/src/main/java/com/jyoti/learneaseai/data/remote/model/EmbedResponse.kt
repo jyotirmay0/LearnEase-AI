@@ -1,4 +1,4 @@
-package com.jyoti.learneaseai.data.remote
+package com.jyoti.learneaseai.data.remote.model
 
 data class EmbedResponse(
     val embedding: Embedding

@@ -59,9 +59,7 @@ object CosineSimilarity {
     }
 }
 
-/**
- * A simple wrapper holding an index into the candidate list and its similarity score.
- */
+
 data class ScoredIndex(
     val index: Int,
     val score: Float

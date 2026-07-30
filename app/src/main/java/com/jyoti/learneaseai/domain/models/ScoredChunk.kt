@@ -13,5 +13,5 @@ data class ScoredChunk(
     val chunkText: String,
     val score: Float,
     val chunkIndex: Int,
-    val documentName: String
+    val documentId: String
 )

@@ -8,9 +8,11 @@ package com.jyoti.learneaseai.pdf
     import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
     import com.tom_roush.pdfbox.pdmodel.PDDocument
     import com.tom_roush.pdfbox.text.PDFTextStripper
+    import dagger.hilt.android.qualifiers.ApplicationContext
+    import javax.inject.Inject
 
-class PdfExatractor (
-        private val context: Context
+class PdfExatractor @Inject constructor(
+        @ApplicationContext private val context: Context
     ) {
 
         init {
@@ -31,6 +33,29 @@ class PdfExatractor (
                 }
 
             return ""
+        }
+
+        /**
+         * Extracts text page-by-page, calling [onPage] for each page's text.
+         * This avoids holding the entire document text in memory at once.
+         */
+        suspend fun extractTextPageByPage(uri: Uri, onPage: (pageText: String) -> Unit) {
+            context.contentResolver
+                .openInputStream(uri)
+                ?.use { inputStream ->
+                    PDDocument.load(inputStream).use { document ->
+                        val stripper = PDFTextStripper()
+                        val totalPages = document.numberOfPages
+                        for (page in 1..totalPages) {
+                            stripper.startPage = page
+                            stripper.endPage = page
+                            val pageText = stripper.getText(document)
+                            if (pageText.isNotBlank()) {
+                                onPage(pageText)
+                            }
+                        }
+                    }
+                }
         }
     }
 fun getFileName(context: Context, uri: Uri): String {
