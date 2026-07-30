@@ -36,16 +36,25 @@ class ChatRepository @Inject constructor(
 
     // ── Public API ────────────────────────────────────────────────────
 
-    /**
-     * Full RAG answer (non-streaming).
-     *
-     * @param question The user's natural-language question.
-     * @return The complete generated answer string.
-     */
-    suspend fun answer(question: String,docId: String): String {
-        val prompt = buildRagPrompt(question,docId)
-        Log.d(TAG, "Sending prompt to local LLM (${prompt.length} chars)")
-        return localLlm.generateFull(prompt)
+
+
+    suspend fun startChat(docId: String, question: String): Flow<String> {
+        val systemContext = buildRagPrompt(question,docId)
+        Log.d(TAG, "Starting session for doc: $docId (${systemContext.length} chars context)")
+        localLlm.startSession(docId, systemContext)
+        return localLlm.sendInSession(docId, question)
+    }
+    suspend fun sendMessege(docId: String, question: String): Flow<String> {
+        if (!localLlm.hasSession(docId)) {
+            Log.d("LLM", localLlm.hasSession(docId).toString())
+            return startChat(docId, question)
+        }
+        return localLlm.sendInSession(docId, question)
+    }
+
+
+   fun endSession(docId: String){
+        localLlm.endSession(docId)
     }
 
     /**
@@ -75,7 +84,7 @@ class ChatRepository @Inject constructor(
         val allEntities = chunkDao.getChunksForDocument(documetId)
         if (allEntities.isEmpty()) {
             Log.w(TAG, "No document embeddings in DB — returning raw question")
-            return PromptBuilder.build(question, emptyList())
+            return PromptBuilder.build( emptyList())
         }
 
         val scoredIndices = CosineSimilarity.rankTopK(
@@ -99,7 +108,7 @@ class ChatRepository @Inject constructor(
         }}")
 
         // 3. Build the prompt
-        return PromptBuilder.build(question, topChunks)
+        return PromptBuilder.build( topChunks)
     }
 
     /**

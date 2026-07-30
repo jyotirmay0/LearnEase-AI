@@ -2,9 +2,13 @@ package com.jyoti.learneaseai.domain
 
 import android.content.Context
 import android.util.Log
+import com.google.ai.edge.litertlm.Conversation
+import com.google.ai.edge.litertlm.ConversationConfig
+import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
+import com.google.ai.edge.litertlm.SamplerConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -28,22 +32,13 @@ class LocalLlmEngine @Inject constructor(@ApplicationContext private val context
     }
 
     private var engine: Engine? = null
+    private val sessions = mutableMapOf<String, Conversation>()
 
     private val _isReady = MutableStateFlow(false)
-    /** True once the model is loaded and ready for inference. */
     val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
-    /** True while the model is being loaded from assets. */
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    /**
-     * Copy the model from assets to internal storage (if not already there)
-     * and initialise the LiteRT-LM engine.
-     *
-     * Call this on a background thread — model loading can take 5-15 seconds.
-     */
-
 
     suspend fun initialize() = withContext(Dispatchers.IO) {
         if (_isReady.value) {
@@ -68,16 +63,41 @@ class LocalLlmEngine @Inject constructor(@ApplicationContext private val context
         }
     }
 
-    /**
-     * Generate a streaming response for the given [prompt].
-     *
-     * @return A [Flow] that emits text tokens as they are generated.
-     * @throws IllegalStateException if the engine hasn't been initialised.
-     */
-    fun generate(prompt: String): Flow<String> {
-        val eng = engine ?: throw IllegalStateException(
-            "LocalLlmEngine not initialised — call initialize() first"
+    // ── Session-based API ─────────────────────────────────────────────
+
+    suspend fun startSession(sessionId: String, systemPrompt: String): Conversation {
+        val eng = requireEngine()
+        endSession(sessionId)
+
+        val config = ConversationConfig(
+            systemInstruction = Contents.of(systemPrompt),
+            samplerConfig = SamplerConfig(topK = 10, topP = 0.95, temperature = 0.8),
         )
+        val conversation = eng.createConversation(config)
+        sessions[sessionId] = conversation
+        Log.d(TAG, "Session started: $sessionId")
+        return conversation
+    }
+
+    suspend fun sendInSession(sessionId: String, userMessage: String): Flow<String> {
+        val conversation = sessions[sessionId]
+            ?: throw IllegalStateException("No active session for '$sessionId' — call startSession() first")
+        return withContext(Dispatchers.IO){conversation.sendMessageAsync(Message.user(userMessage)).map { it.toString()}  }
+    }
+
+    fun hasSession(sessionId: String): Boolean = sessions.containsKey(sessionId)
+
+    fun endSession(sessionId: String) {
+        sessions.remove(sessionId)?.let { conversation ->
+            conversation.close()
+            Log.d(TAG, "Session ended: $sessionId")
+        }
+    }
+
+    // ── Stateless API (kept for non-session use) ──────────────────────
+
+    fun generate(prompt: String): Flow<String> {
+        val eng = requireEngine()
         val conversation = eng.createConversation()
         val userMessage = Message.of(prompt)
         return conversation.sendMessageAsync(userMessage).map { message ->
@@ -85,19 +105,12 @@ class LocalLlmEngine @Inject constructor(@ApplicationContext private val context
         }
     }
 
-    /**
-     * Generate a complete (non-streaming) response for the given [prompt].
-     *
-     * Collects all tokens from the streaming API and joins them.
-     */
     suspend fun generateFull(prompt: String): String {
         return generate(prompt).toList().joinToString("")
     }
 
-    /**
-     * Release all native resources held by the engine.
-     */
     fun close() {
+        sessions.keys.toList().forEach { endSession(it) }
         engine?.close()
         engine = null
         _isReady.value = false
@@ -106,11 +119,12 @@ class LocalLlmEngine @Inject constructor(@ApplicationContext private val context
 
     // ── Internal ──────────────────────────────────────────────────────
 
-    /**
-     * Copy [assetName] from the APK's assets/ directory to the app's
-     * internal files directory. Skips the copy if the file already exists
-     * with the same size.
-     */
+    private fun requireEngine(): Engine {
+        return engine ?: throw IllegalStateException(
+            "LocalLlmEngine not initialised — call initialize() first"
+        )
+    }
+
     private fun copyAssetIfNeeded(assetName: String): File {
         val destFile = File(context.filesDir, assetName)
         if (destFile.exists()) {

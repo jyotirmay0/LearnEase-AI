@@ -1,5 +1,6 @@
 package com.jyoti.learneaseai.ui.chat
 
+import android.util.Log
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -42,6 +43,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,11 +57,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 
-data class ChatMessage(
-    val text: String,
-    val isUser: Boolean
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,21 +68,11 @@ fun ChatScreen(
     onSendMessage: (String) -> Unit = {},
     onCloseClick: () -> Unit = {}
 ) {
-    val messages = listOf(
-        ChatMessage(
-            text = "What would you like to know about this document?",
-            isUser = false
-        ),
-        ChatMessage(
-            text = "What are the key deliverables mentioned in section 2?",
-            isUser = true
-        ),
-        ChatMessage(
-            text = "Based on Section 2, the three key deliverables are:\n\n1. A finalized architectural diagram by Q4.\n2. A complete audit of the legacy codebase.\n3. The preliminary rollout of the new authentication service.",
-            isUser = false
-        )
-    )
-    val isLoading: Boolean = true
+
+    val vm: ChatVM= hiltViewModel()
+    val messages by vm.messages.collectAsState()
+
+    val isLoading: Boolean = false
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
@@ -106,7 +95,8 @@ fun ChatScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = onCloseClick) {
+                    IconButton(onClick =
+                        onCloseClick ) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Close"
@@ -148,7 +138,8 @@ fun ChatScreen(
                 onValueChange = { inputText = it },
                 onSend = {
                     if (inputText.isNotBlank()) {
-                        onSendMessage(inputText.trim())
+                        Log.d("CHAT", "Clicked: $inputText")
+                        vm.sendMessege(inputText.trim())
                         inputText = ""
                     }
                 }

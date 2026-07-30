@@ -50,6 +50,7 @@ fun navGraph(navController: NavHostController= rememberNavController()){
 
                 },
                 onCloseClick = {
+
                     navController.popBackStack()
 
                 }

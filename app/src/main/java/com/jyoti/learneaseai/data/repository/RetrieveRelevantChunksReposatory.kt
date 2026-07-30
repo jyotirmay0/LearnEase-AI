@@ -66,6 +66,6 @@ class RetrievalReposatory
         docID: String
     ): String {
         val relevantChunks = retrieve(queryEmbedding, topK,docID)
-        return PromptBuilder.build(query = query, relevantChunks = relevantChunks)
+        return PromptBuilder.build( relevantChunks = relevantChunks)
     }
 }
