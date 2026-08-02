@@ -26,9 +26,7 @@ class MainActivity : ComponentActivity() {
 
             val navController= rememberNavController()
             LearnEaseAITheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    navGraph(navController)
-                }
+                navGraph(navController)
             }
         }
     }

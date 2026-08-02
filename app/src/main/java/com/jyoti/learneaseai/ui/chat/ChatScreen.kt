@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -64,8 +65,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun ChatScreen(
     title: String = "",
-
-    onSendMessage: (String) -> Unit = {},
     onCloseClick: () -> Unit = {}
 ) {
 
@@ -113,6 +112,7 @@ fun ChatScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 .imePadding()
         ) {
             LazyColumn(

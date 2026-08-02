@@ -46,9 +46,7 @@ fun navGraph(navController: NavHostController= rememberNavController()){
             val args = backstackEntry.toRoute<Routes.Detail>()
             ChatScreen (
                 title = args.docId,
-                onSendMessage = {docId->
 
-                },
                 onCloseClick = {
 
                     navController.popBackStack()
