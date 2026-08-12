@@ -102,5 +102,7 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     // Kotlin Serialization
     implementation(libs.kotlinx.serialization.json)
-    // Testing
+
+    //tflite
+    implementation("org.tensorflow:tensorflow-lite:2.16.1")
 }
