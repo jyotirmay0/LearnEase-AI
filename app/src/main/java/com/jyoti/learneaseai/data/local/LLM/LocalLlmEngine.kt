@@ -1,10 +1,10 @@
-package com.jyoti.learneaseai.domain
+package com.jyoti.learneaseai.data.local.LLM
 
 import android.content.Context
 import android.util.Log
+import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.ConversationConfig
-import com.google.ai.edge.litertlm.Contents
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import com.google.ai.edge.litertlm.Message
@@ -22,9 +22,10 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
-
 @Singleton
-class LocalLlmEngine @Inject constructor(@ApplicationContext private val context: Context) {
+class LocalLlmEngine @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
 
     companion object {
         private const val TAG = "LocalLlmEngine"
@@ -70,7 +71,7 @@ class LocalLlmEngine @Inject constructor(@ApplicationContext private val context
         endSession(sessionId)
 
         val config = ConversationConfig(
-            systemInstruction = Contents.of(systemPrompt),
+            systemInstruction = Contents.Companion.of(systemPrompt),
             samplerConfig = SamplerConfig(topK = 10, topP = 0.95, temperature = 0.8),
         )
         val conversation = eng.createConversation(config)
@@ -82,7 +83,13 @@ class LocalLlmEngine @Inject constructor(@ApplicationContext private val context
     suspend fun sendInSession(sessionId: String, userMessage: String): Flow<String> {
         val conversation = sessions[sessionId]
             ?: throw IllegalStateException("No active session for '$sessionId' — call startSession() first")
-        return withContext(Dispatchers.IO){conversation.sendMessageAsync(Message.user(userMessage)).map { it.toString()}  }
+        return withContext(Dispatchers.IO) {
+            conversation.sendMessageAsync(
+                Message.Companion.user(
+                    userMessage
+                )
+            ).map { it.toString() }
+        }
     }
 
     fun hasSession(sessionId: String): Boolean = sessions.containsKey(sessionId)
@@ -99,7 +106,7 @@ class LocalLlmEngine @Inject constructor(@ApplicationContext private val context
     fun generate(prompt: String): Flow<String> {
         val eng = requireEngine()
         val conversation = eng.createConversation()
-        val userMessage = Message.of(prompt)
+        val userMessage = Message.Companion.of(prompt)
         return conversation.sendMessageAsync(userMessage).map { message ->
             message.toString()
         }

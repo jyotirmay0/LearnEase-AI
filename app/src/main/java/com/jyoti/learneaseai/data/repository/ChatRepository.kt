@@ -8,7 +8,7 @@ import com.jyoti.learneaseai.data.remote.model.EmbedRequest
 import com.jyoti.learneaseai.data.remote.GeminiApi
 import com.jyoti.learneaseai.data.remote.model.Part
 import com.jyoti.learneaseai.domain.CosineSimilarity
-import com.jyoti.learneaseai.domain.LocalLlmEngine
+import com.jyoti.learneaseai.data.local.LLM.LocalLlmEngine
 import com.jyoti.learneaseai.domain.PromptBuilder
 import com.jyoti.learneaseai.domain.models.ScoredChunk
 import kotlinx.coroutines.flow.Flow

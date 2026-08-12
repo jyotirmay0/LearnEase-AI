@@ -8,7 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.jyoti.learneaseai.data.repository.ChatRepository
 import com.jyoti.learneaseai.data.repository.DocumentRepositoryImpl
 import com.jyoti.learneaseai.domain.Chunker
-import com.jyoti.learneaseai.domain.LocalLlmEngine
+import com.jyoti.learneaseai.data.local.LLM.LocalLlmEngine
 import com.jyoti.learneaseai.domain.models.Document
 import com.jyoti.learneaseai.pdf.PdfExatractor
 import dagger.hilt.android.lifecycle.HiltViewModel
