@@ -8,6 +8,7 @@ import com.jyoti.learneaseai.data.local.ChunkEntity
 import com.jyoti.learneaseai.data.local.DocumentDao
 import com.jyoti.learneaseai.data.local.DocumentEntity
 import com.jyoti.learneaseai.data.local.DocumentStatus
+import com.jyoti.learneaseai.data.local.embed.LocalEmbeddingEngine
 import com.jyoti.learneaseai.data.remote.model.Content
 import com.jyoti.learneaseai.data.remote.model.EmbedRequest
 import com.jyoti.learneaseai.data.remote.GeminiApi
@@ -33,7 +34,9 @@ class DocumentRepositoryImpl @Inject constructor(
     private val chunkDao: ChunkDao, private val documentDao: DocumentDao,
      private val api: GeminiApi,
     @ApplicationContext private val context: Context,
-    private val pdfExatractor: PdfExatractor)
+    private val pdfExatractor: PdfExatractor,
+    private val localEmbed: LocalEmbeddingEngine
+)
 {
 
 
@@ -66,7 +69,12 @@ class DocumentRepositoryImpl @Inject constructor(
                 allChunks.addAll(Chunker.chunk(pageText))
             }
             val chunktexts = allChunks.toList()
-            val embeddings=getEmbedChunks(chunktexts,5)
+            Log.d(
+                "CHUNK",
+                " chunks=${chunktexts.size}"
+            )
+
+            val embeddings=getLocalEmbedChunks(chunktexts,1)
             saveEmbeddingsToDb(chunktexts,embeddings,docId)
             documentDao.updateStatus(docId, DocumentStatus.READY,chunktexts.size)
         }catch (e: Exception)
@@ -100,6 +108,23 @@ class DocumentRepositoryImpl @Inject constructor(
             wave.map { chunk ->
                 async(Dispatchers.IO) {
                     embedWithRetry(  chunk)
+                }
+            }.awaitAll()
+        }
+    }
+
+    suspend fun getLocalEmbedChunks(
+        chunks: List<String>, concurrency: Int = 1
+    ): List<FloatArray> = coroutineScope {
+        chunks.chunked(concurrency).flatMapIndexed { waveIndex, wave ->
+            Log.d("embed", "Processing wave ${waveIndex + 1}, chunks: ${wave.size}")
+
+            // Delay between waves to avoid rate limiting (skip first wave)
+          //  if (waveIndex > 0) delay(1500)
+
+            wave.map { chunk ->
+                async(Dispatchers.IO) {
+                    localEmbed.embed(  chunk)
                 }
             }.awaitAll()
         }
@@ -203,5 +228,11 @@ class DocumentRepositoryImpl @Inject constructor(
 
         return digest.digest()
             .joinToString("") { "%02x".format(it) }
+    }
+
+
+
+    suspend fun deleteDocById(id: String){
+        documentDao.deleteByDocument(id)
     }
 }

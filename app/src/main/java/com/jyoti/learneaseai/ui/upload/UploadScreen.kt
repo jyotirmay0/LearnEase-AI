@@ -159,7 +159,7 @@ fun UploadScreen(
                         onDocumentClick(document.id)
                     },
                     onMenuClick = {
-                        // Show menu
+                        vm.deleteDoc(document.id)
                     }
                 )
             }

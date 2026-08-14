@@ -9,6 +9,7 @@ import com.jyoti.learneaseai.data.remote.GeminiApi
 import com.jyoti.learneaseai.data.remote.model.Part
 import com.jyoti.learneaseai.domain.CosineSimilarity
 import com.jyoti.learneaseai.data.local.LLM.LocalLlmEngine
+import com.jyoti.learneaseai.data.local.embed.LocalEmbeddingEngine
 import com.jyoti.learneaseai.domain.PromptBuilder
 import com.jyoti.learneaseai.domain.models.ScoredChunk
 import kotlinx.coroutines.flow.Flow
@@ -26,7 +27,8 @@ class ChatRepository @Inject constructor(
     private val api: GeminiApi,
     private val documentDao: DocumentDao,
     private val chunkDao: ChunkDao,
-    private val localLlm: LocalLlmEngine
+    private val localLlm: LocalLlmEngine,
+    private val localEmbed: LocalEmbeddingEngine
 ) {
 
     companion object {
@@ -77,7 +79,7 @@ class ChatRepository @Inject constructor(
      */
     private suspend fun buildRagPrompt(question: String,documetId: String): String {
         // 1. Embed the query via Gemini cloud (taskType = RETRIEVAL_QUERY)
-        val queryEmbedding = embedQuery(question)
+        val queryEmbedding = localEmbed.embed(question)
         Log.d(TAG, "Query embedded (${queryEmbedding.size} dims)")
 
         // 2. Fetch all stored document embeddings and rank by similarity

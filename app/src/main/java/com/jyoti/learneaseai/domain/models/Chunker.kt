@@ -5,12 +5,34 @@ object Chunker {
     private const val DEFAULT_CHUNK_SIZE = 500      // characters
     private const val DEFAULT_OVERLAP = 100         // characters
 
+
+
+
+    fun chunk(text: String, chunkSize: Int = 800, overlap: Int = 120): List<String> {
+        if (text.isBlank()) return emptyList()
+        val step = chunkSize - overlap
+        val chunks = mutableListOf<String>()
+        var start = 0
+        while (start < text.length) {
+            var end = minOf(start + chunkSize, text.length)
+            if (end < text.length) {
+                // Scan back within the overlap window to avoid cutting mid-word
+                val scanFrom = maxOf(end - overlap, start + 1)
+                val ws = (end downTo scanFrom).firstOrNull { text[it - 1].isWhitespace() }
+                if (ws != null) end = ws
+            }
+            val chunk = text.substring(start, end).trim()
+            if (chunk.isNotEmpty()) chunks.add(chunk)
+            start += step
+        }
+        return chunks
+    }
     /**
      * Memory-efficient chunker that avoids creating a full cleaned copy of the text.
      * Instead, it streams through the input character-by-character, collapsing
      * whitespace on-the-fly and emitting chunks as it goes.
      */
-    fun chunk(
+    fun chunk1(
         text: String,
         chunkSize: Int = DEFAULT_CHUNK_SIZE,
         overlap: Int = DEFAULT_OVERLAP

@@ -105,7 +105,7 @@ class UploadVM @Inject constructor(private val docRepo: DocumentRepositoryImpl,
                 // Wait until chunks are available
                 _chunks.first { it.isNotEmpty() }.let { chunks ->
                     Log.d("embed", "embedding viewmodel called")
-                    _embedding.value = docRepo.getEmbedChunks(
+                    _embedding.value = docRepo.getLocalEmbedChunks(
                         chunks
                     )
                 }
@@ -156,6 +156,14 @@ class UploadVM @Inject constructor(private val docRepo: DocumentRepositoryImpl,
 
         }
 
+
+    }
+    fun deleteDoc(id: String)
+    {
+        viewModelScope.launch {
+            docRepo.deleteDocById(id)
+
+        }
 
     }
 }
