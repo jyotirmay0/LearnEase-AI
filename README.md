@@ -24,7 +24,7 @@ Upload a PDF, and ask questions about it — answered by an LLM running directly
 | Similarity search / retrieval | 📱 On-device |
 | **Answer generation (LLM)** | 📱 **On-device** (Gemma via LiteRT-LM) |
 
-**Goal: fully offline.** The LLM already runs locally — the last cloud dependency is the embedding step. An on-device embedding model is in progress so the entire pipeline (extraction → embedding → retrieval → generation) can run with zero network access and zero data leaving the device.
+**Goal: fully offline.** The LLM already runs locally — and the `feature/localEmbedding` branch now also runs embeddings on-device, closing the last cloud dependency. The fully offline pipeline (extraction → embedding → retrieval → generation) can now run with zero network access and zero data leaving the device.
 
 ## Architecture
 
