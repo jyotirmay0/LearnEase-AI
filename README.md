@@ -14,6 +14,16 @@ Upload a PDF, and ask questions about it — answered by an LLM running directly
 5. **Ask a question** — your question is embedded the same way, then compared against every stored chunk using cosine similarity to find the top-5 most relevant passages.
 6. **Answer, on-device** — those passages are stitched into a prompt and handed to **Gemma**, running locally on the phone through Google's **LiteRT-LM** runtime. The answer streams back token-by-token.
 
+
+
+## 🎥 Full Demo
+
+Watch the complete demo of LearnEase AI, showcasing the PDF ingestion pipeline, on-device RAG, and Gemma-powered Q&A.
+
+[▶️ Watch the Full Demo Video](https://drive.google.com/file/d/1KJbPFevgr2y1JK87zdSRT_bRNl0PfTUk/view?usp=drive_link)
+
+---
+
 ## Current status
 
 | Pipeline stage | Where it runs today |
